@@ -1,14 +1,14 @@
+# Changes to original
+
+- This plugin won't mess with your original <content src>. It starts a webserver for you and let you decide if you want something to access through it. e.g you can run your app as usual, file://, but request resources from Documents/ folder through http://localhost:8888/local-filesystem/
+- Port is now configurable in config.xml
+- No access to www/ folder
+- Removed some dependencies
+
+
 # Cordova Local WebServer
 
-This Apache Cordova plugin will install a local web server in your iOS app, and will serve the contents of your `www` directory, looking for an index page of `index.html`.
-
-After the plugin is installed, it changes the `config.xml` in your project root by modifying this tag to:
-    
-        <content src="http://localhost:0" />
-    
-For the local web server to start, the url **must** be http://localhost, and you can set the port to whatever you want in the url, the local web server will use this as the port automatically. `If you set the port to "0", it will select a randomized and free port.`
-    
-Check your console log for errors in configuration. 
+This Apache Cordova plugin will install a local web server in your iOS app.
 
 ### localStorage, IndexedDB persistence
 
