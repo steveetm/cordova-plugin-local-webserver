@@ -5,6 +5,8 @@
 - No access to www/ folder
 - Removed some dependencies
 
+This plugin currently modified to our needs, it not necessarily nice or makes no sense atm.
+   
 
 # Cordova Local WebServer
 
