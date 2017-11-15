@@ -17,10 +17,14 @@
  under the License.
  */
 
+
 #import <Cordova/CDVPlugin.h>
 #import "GCDWebServer.h"
 
 @interface CDVLocalWebServer : CDVPlugin
+- (void)getAuthToken:(CDVInvokedUrlCommand *)command;
 
 @property (nonatomic, strong) GCDWebServer* server;
+@property (nonatomic, strong) NSString* authToken;
+
 @end

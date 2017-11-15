@@ -38,36 +38,30 @@
 
 @implementation CDVLocalWebServer
 
+- (void)getAuthToken:(CDVInvokedUrlCommand *)command {
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:self.authToken];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
 - (void) pluginInitialize {
 
-    BOOL useLocalWebServer = NO;
+    BOOL useLocalWebServer = YES;
     BOOL requirementsOK = NO;
     NSString* indexPage = @"index.html";
-    NSString* appBasePath = @"www";
-    NSUInteger port = 80;
+    NSUInteger port = [[self.commandDelegate.settings cordovaSettingForKey:@"CordovaLocalWebServerPort"] integerValue];
 
     // check the content tag src
     CDVViewController* vc = (CDVViewController*)self.viewController;
-    NSURL* startPageUrl = [NSURL URLWithString:vc.startPage];
-    if (startPageUrl != nil) {
-        if ([[startPageUrl scheme] isEqualToString:@"http"] && [[startPageUrl host] isEqualToString:@"localhost"]) {
-            port = [[startPageUrl port] unsignedIntegerValue];
-            useLocalWebServer = YES;
-        }
-    }
 
     requirementsOK = [self checkRequirements];
-    if (!requirementsOK) {
-        useLocalWebServer = NO;
-        NSString* alternateContentSrc = [self.commandDelegate.settings cordovaSettingForKey:@"AlternateContentSrc"];
-        vc.startPage = alternateContentSrc? alternateContentSrc : indexPage;
-    }
-
+    
+    NSString* alternateContentSrc = [self.commandDelegate.settings cordovaSettingForKey:@"AlternateContentSrc"];
+    vc.startPage = alternateContentSrc? alternateContentSrc : indexPage;
     // check setting
 #if TARGET_IPHONE_SIMULATOR
     if (useLocalWebServer) {
         NSNumber* startOnSimulatorSetting = [[self.commandDelegate settings] objectForKey:[@"CordovaLocalWebServerStartOnSimulator" lowercaseString]];
-        if (startOnSimulatorSetting) {
+        if (true) {
             useLocalWebServer = [startOnSimulatorSetting boolValue];
         }
     }
@@ -78,35 +72,30 @@
         port = [self _availablePort];
     }
 
-    NSString* authToken = [NSString stringWithFormat:@"cdvToken=%@", [[NSProcessInfo processInfo] globallyUniqueString]];
-
+    self.authToken = [NSString stringWithFormat:@"cdvToken=%@", [[NSProcessInfo processInfo] globallyUniqueString]];
     self.server = [[GCDWebServer alloc] init];
-    [GCDWebServer setLogLevel:kGCDWebServerLoggingLevel_Error];
+    [GCDWebServer setLogLevel:kGCDWebServerLoggingLevel_Debug];
 
     if (useLocalWebServer) {
-        [self addAppFileSystemHandler:authToken basePath:[NSString stringWithFormat:@"/%@/", appBasePath] indexPage:indexPage];
-
+        
         // add after server is started to get the true port
-        [self addFileSystemHandlers:authToken];
-        [self addErrorSystemHandler:authToken];
+        [self addFileSystemHandlers:self.authToken];
+        [self addErrorSystemHandler:self.authToken];
         
         // handlers must be added before server starts
         [self.server startWithPort:port bonjourName:nil];
-
-        // Update the startPage (supported in cordova-ios 3.7.0, see https://issues.apache.org/jira/browse/CB-7857)
-		vc.startPage = [NSString stringWithFormat:@"http://localhost:%lu/%@/%@?%@", (unsigned long)self.server.port, appBasePath, indexPage, authToken];
 
     } else {
         if (requirementsOK) {
             NSString* error = [NSString stringWithFormat:@"WARNING: CordovaLocalWebServer: <content> tag src is not http://localhost[:port] (is %@).", vc.startPage];
             NSLog(@"%@", error);
 
-            [self addErrorSystemHandler:authToken];
+            [self addErrorSystemHandler:self.authToken];
             
             // handlers must be added before server starts
             [self.server startWithPort:port bonjourName:nil];
 
-            vc.startPage = [self createErrorUrl:error authToken:authToken];
+            vc.startPage = [self createErrorUrl:error authToken:self.authToken];
         } else {
             GWS_LOG_ERROR(@"%@ stopped, failed requirements check.", [self.server class]);
         }
@@ -163,42 +152,6 @@
 {
     [self addLocalFileSystemHandler:authToken];
     [self addAssetLibraryFileSystemHandler:authToken];
-
-    SEL sel = NSSelectorFromString(@"setUrlTransformer:");
-    __weak __typeof(self) weakSelf = self;
-
-    if ([self.commandDelegate respondsToSelector:sel]) {
-        NSURL* (^urlTransformer)(NSURL*) = ^NSURL* (NSURL* urlToTransform) {
-            NSURL* localServerURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://localhost:%lu", (unsigned long)weakSelf.server.port]];
-            
-            NSURL* transformedUrl = urlToTransform;
-
-            NSString* localhostUrlString = [NSString stringWithFormat:@"http://localhost:%lu", (unsigned long)[localServerURL.port unsignedIntegerValue]];
-
-            if ([[urlToTransform scheme] isEqualToString:ASSETS_LIBRARY_PATH]) {
-                transformedUrl = [NSURL URLWithString:[NSString stringWithFormat:@"%@/%@/%@%@",
-                        localhostUrlString,
-                        ASSETS_LIBRARY_PATH,
-                        urlToTransform.host,
-                        urlToTransform.path
-                        ]];
-
-            } else if ([[urlToTransform scheme] isEqualToString:@"file"]) {
-                transformedUrl = [NSURL URLWithString:[NSString stringWithFormat:@"%@/%@%@",
-                       localhostUrlString,
-                        LOCAL_FILESYSTEM_PATH,
-                       urlToTransform.path
-                        ]];
-            }
-
-            return transformedUrl;
-        };
-
-        ((void (*)(id, SEL, id))objc_msgSend)(self.commandDelegate, sel, urlTransformer);
-
-    } else {
-        NSLog(@"WARNING: CDVPlugin's commandDelegate is missing a urlTransformer property. The local web server can't set it to transform file and asset-library urls");
-    }
 }
 
 - (void) addFileSystemHandler:(GCDWebServerAsyncProcessBlock)processRequestForResponseBlock basePath:(NSString*)basePath authToken:(NSString*)authToken cacheAge:(NSUInteger)cacheAge
@@ -296,7 +249,12 @@
 
     GCDWebServerAsyncProcessBlock processRequestBlock = ^void (GCDWebServerRequest* request, GCDWebServerCompletionBlock complete) {
 
-        NSString* filePath = [request.path substringFromIndex:basePath.length];
+
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+        NSString *docsPath = [paths objectAtIndex:0];
+        NSString *filePath = [NSString stringWithFormat:@"%@/%@", docsPath,[request.path substringFromIndex:basePath.length]];
+        NSLog(@"Path of image is %@",filePath);
+        
         NSString* fileType = [[[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:NULL] fileType];
         GCDWebServerResponse* response = nil;
 
