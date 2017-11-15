@@ -1,6 +1,6 @@
 # Changes to original
 
-- This plugin won't mess with your original <content src>. It starts a webserver for you and let you decide if you want something to access through it. e.g you can run your app as usual, file://, but request resources from Documents/ folder through http://localhost:8888/local-filesystem/
+- This plugin won't mess with your original \<content src\>. It starts a webserver for you and let you decide if you want something to access through it. e.g you can run your app as usual, file://, but request resources from Documents/ folder through http://localhost:8888/local-filesystem/
 - Port is now configurable in config.xml
 - No access to www/ folder
 - Removed some dependencies
