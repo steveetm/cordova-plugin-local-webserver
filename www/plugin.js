@@ -4,7 +4,7 @@ const PLUGIN_NAME = 'CDVLocalWebServer';
 
 class LocalWebServer {
     static getAuthToken() {
-	return new Promise((resolve, reject) => {
+	return new Promise(function(resolve, reject) {
             exec(resolve, reject, PLUGIN_NAME, 'getAuthToken', []);
 	});
     }
