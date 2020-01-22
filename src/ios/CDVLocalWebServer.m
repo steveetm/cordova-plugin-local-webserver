@@ -18,7 +18,7 @@
  */
 
 #import "CDVLocalWebServer.h"
-#import "GCDWebServerPrivate.h"
+#import <GCDWebServer/GCDWebServerPrivate.h>
 #import <Cordova/CDVViewController.h>
 #import <Cordova/NSDictionary+CordovaPreferences.h>
 #import <AssetsLibrary/AssetsLibrary.h>
