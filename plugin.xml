@@ -50,14 +50,7 @@
 	    <framework src="AssetsLibrary.framework" />
 	    <framework src="MobileCoreServices.framework" />
 	    <framework src="CFNetwork.framework" />
-<podspec>
-            <config>
-                <source url="https://github.com/CocoaPods/Specs.git"/>
-            </config>
-            <pods use-frameworks="true">
-                <pod name="GCDWebServer" spec="~> 3.5"/>
-            </pods>
-        </podspec>
+        <framework src="GCDWebServer" type="podspec" spec="~> 3.5" />
         <framework src="libz.dylib" />
 
         <info>

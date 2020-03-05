@@ -19,6 +19,9 @@
 
 #import "CDVLocalWebServer.h"
 #import <GCDWebServer/GCDWebServer.h>
+#import <GCDWebServer/GCDWebServerResponse.h>
+#import <GCDWebServer/GCDWebServerErrorResponse.h>
+#import <GCDWebServer/GCDWebServerFileResponse.h>
 #import <Cordova/CDVViewController.h>
 #import <Cordova/NSDictionary+CordovaPreferences.h>
 #import <AssetsLibrary/AssetsLibrary.h>
@@ -97,7 +100,7 @@
 
             vc.startPage = [self createErrorUrl:error authToken:self.authToken];
         } else {
-            GWS_LOG_ERROR(@"%@ stopped, failed requirements check.", [self.server class]);
+            NSLog(@"%@ stopped, failed requirements check.", [self.server class]);
         }
     }
 }
