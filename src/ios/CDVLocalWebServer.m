@@ -18,7 +18,7 @@
  */
 
 #import "CDVLocalWebServer.h"
-#import <GCDWebServer/GCDWebServerPrivate.h>
+#import <GCDWebServer/GCDWebServer.h>
 #import <Cordova/CDVViewController.h>
 #import <Cordova/NSDictionary+CordovaPreferences.h>
 #import <AssetsLibrary/AssetsLibrary.h>
@@ -47,11 +47,12 @@
 
     BOOL useLocalWebServer = YES;
     BOOL requirementsOK = NO;
-    NSString* indexPage = @"index.html";
+    CDVViewController* vc = (CDVViewController*)self.viewController;
+
+    NSString* indexPage = vc.startPage;
     NSUInteger port = [[self.commandDelegate.settings cordovaSettingForKey:@"CordovaLocalWebServerPort"] integerValue];
 
     // check the content tag src
-    CDVViewController* vc = (CDVViewController*)self.viewController;
 
     requirementsOK = [self checkRequirements];
     
@@ -74,7 +75,6 @@
 
     self.authToken = [NSString stringWithFormat:@"cdvToken=%@", [[NSProcessInfo processInfo] globallyUniqueString]];
     self.server = [[GCDWebServer alloc] init];
-    [GCDWebServer setLogLevel:kGCDWebServerLoggingLevel_Debug];
 
     if (useLocalWebServer) {
         
